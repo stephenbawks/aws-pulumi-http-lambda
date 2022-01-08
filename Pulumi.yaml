@@ -1,0 +1,6 @@
+name: example-name
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Example Description
