@@ -86,17 +86,35 @@ if checkZone and checkZone.strip():
         print("Route53 Zone Selected: " + zone_lookup.name)
         print("Route53 Zone Id: " + zone_lookup.id)
         ZONE_ID = zone_lookup.id
-    except:
-        print("Route53 Zone Does Not Exist and will be created.")
-        print("Route53 Zone: " + ROUTE53_ZONE)
-        zone = aws.route53.Zone("route53Zone",
-            name=ROUTE53_ZONE,
-            tags=tags
-        )
-        ZONE_ID = zone.id
 
-    pulumi.export('Route53Id', zone.id)
-    pulumi.export('Route53NsAddresses', zone.name_servers)
+        pulumi.export('Route53Id', zone_lookup.id)
+        pulumi.export('Route53NsAddresses', zone_lookup.name_servers)
+    except:
+        print("Route53 Zone does not exists and NEEDS to be created before running this.")
+        exit()
+
+
+# ----------------------------------------------------------------
+# CERTIFICATE
+# ----------------------------------------------------------------
+
+checkCertificate = conf.get("certificate_domain_name")
+if checkCertificate and checkCertificate.strip():
+    checkCertificate = conf.get("certificate_domain_name")
+
+    print("Look up Certificate Domain Name: " + checkCertificate)
+    try:
+        certificate_lookup = aws.acm.get_certificate(domain=checkCertificate,
+            most_recent=True
+        )
+        print(" * Certificate Exists")
+        print(" * Certificate Id: " + certificate_lookup.id)
+        CERTIFICATE_ARN = certificate_lookup.arn
+
+        pulumi.export('CertificateArn', certificate_lookup.arn)
+    except:
+        print("Certificate does not exist and NEEDS to be created before running this.")
+        exit()
 
 
 
@@ -153,15 +171,17 @@ apiStage = aws.apigatewayv2.Stage("httpApiStage",
     tags=tags
 )
 
+
 CREATE_API_MAPPING = conf.get("create_api_mapping")
 if CREATE_API_MAPPING and CREATE_API_MAPPING.lower() == "true":
     API_URL = conf.get("api_url")
-    CERTIFICATE_ARN = conf.get("certificate_arn")
 
     # Uses ZONE_ID from above in the ROUTE53 section
     customDomainName = create_api_domain_mapping(acm_cert_arn=CERTIFICATE_ARN, domain_name=API_URL, api_id=api.id, stage_id=apiStage.id, zone_id=ZONE_ID)
 else:
     print("No Domain Name Mapping")
+
+
 
 # ----------------------------------------------------------------
 # Lambda
