@@ -1,8 +1,10 @@
 import os
 import json
-from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools import Tracer, Logger, Metrics
-from aws_lambda_powertools.event_handler.api_gateway import ApiGatewayResolver, ProxyEventType
+from aws_lambda_powertools.utilities.data_classes import event_source, EventBridgeEvent
+from aws_lambda_powertools.utilities import parameters
+
+
 
 
 # Grabbing Environmental Variables on the Lambda Function
@@ -42,7 +44,7 @@ BUCKET_NAME = os.environ['BUCKET_NAME']
 tracer = Tracer()  # Sets service via env var
 logger = Logger()
 metrics = Metrics()
-app = ApiGatewayResolver(proxy_type=ProxyEventType.APIGatewayProxyEventV2)
+
 
 @tracer.capture_method(capture_response=False)
 def extract_data(event: dict):

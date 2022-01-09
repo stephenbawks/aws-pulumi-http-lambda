@@ -15,7 +15,8 @@ STACK_NAME = f"{ENVIRONMENT}-{APP_NAME}"
 LAMBDA_MEMORY = conf.get_int("lambda_memory")
 LAMBDA_RUNTIME = conf.get("lambda_runtime")
 LAMBDA_HANDLER = conf.get("lambda_handler")
-INSIGHTS_LAYER = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension:16"
+INSIGHTS_LAYER_X86 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension:16"
+INSIGHTS_LAYER_ARM64 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension-Arm64:1"
 POWERTOOLS_LAYER = f"arn:aws:lambda:{AWS_REGION}:017000801446:layer:AWSLambdaPowertoolsPython:6"
 
 
@@ -70,6 +71,7 @@ def create_api_domain_mapping(acm_cert_arn: str, domain_name: str, api_id: str, 
 
     pulumi.export('apiGatewayDomainName', apiDomainName.domain_name_configuration.target_domain_name)
     return apiDomainName.domain_name_configuration.target_domain_name
+
 
 
 # ----------------------------------------------------------------
@@ -186,15 +188,28 @@ else:
 # Lambda
 # ----------------------------------------------------------------
 
-# Any Lambda Layers you want might to add here, comma separated
-LAMBDA_LAYERS = [
-        "arn:aws:lambda:us-east-2:547201116507:layer:python-lambda-layer-09_12_2021:3"
-    ]
-
 # Any Managed Policies you want might to add here, comma separated
 LAMBDA_MANAGED_POLICY_ARNS=[]
 
 print("Lambda Options")
+
+LAMBDA_ARCHITECTURES = conf.get("lambda_architecture")
+if LAMBDA_ARCHITECTURES and LAMBDA_ARCHITECTURES.strip():
+    print(f" * Lambda Architectures: {LAMBDA_ARCHITECTURES}")
+else:
+    LAMBDA_ARCHITECTURES = "x86_64"
+    print(f" * Lambda Architectures: {LAMBDA_ARCHITECTURES}")
+
+LAMBDA_LAYER_ARNS = conf.get("lambda_layer_arns")
+if LAMBDA_LAYER_ARNS and LAMBDA_LAYER_ARNS.strip():
+    LAMBDA_LAYERS = []
+    LAMBDA_LAYER_ARNS = LAMBDA_LAYER_ARNS.replace(' ','').split(',')
+    LAMBDA_LAYERS.extend(LAMBDA_LAYER_ARNS)
+    print(f" + Additional Layers: {LAMBDA_LAYERS}")
+else:
+    LAMBDA_LAYERS = []
+
+
 ENABLE_XRAY_TRACING = conf.get("enable_xray_tracing")
 if ENABLE_XRAY_TRACING and ENABLE_XRAY_TRACING.lower() == "true":
     print(f" * Enabling AWS XRay Tracing")
@@ -206,10 +221,14 @@ else:
 
 ADD_INSIGHTS_LAYER = conf.get("add_insights_layer")
 if ADD_INSIGHTS_LAYER and ADD_INSIGHTS_LAYER.lower() == "true":
-    LAMBDA_LAYERS.append(INSIGHTS_LAYER)
-    print(" + Adding Cloudwatch Lambda Insights Layer")
-    LAMBDA_MANAGED_POLICY_ARNS.append("arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy")
+    if LAMBDA_ARCHITECTURES == "arm64":
+        LAMBDA_LAYERS.append(INSIGHTS_LAYER_ARM64)
+        print(" + Adding Cloudwatch Lambda Insights Layer - arm64")
+    else:
+        LAMBDA_LAYERS.append(INSIGHTS_LAYER_X86)
+        print(" + Adding Cloudwatch Lambda Insights Layer - x86-64")
     print("   + Adding Cloudwatch Lambda Insights Managed Policy")
+    LAMBDA_MANAGED_POLICY_ARNS.append("arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy")
 
 ADD_POWERTOOLS_LAYER = conf.get("add_powertools_layer")
 if ADD_POWERTOOLS_LAYER and ADD_POWERTOOLS_LAYER.lower() == "true":
