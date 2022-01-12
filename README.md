@@ -18,7 +18,7 @@ In this repository there is an example environment file named `Pulumi.ENV.yaml` 
 ### Inputs
 | Name                      | Type   | Required | Description                                                                               |
 | ------------------------- | ------ | -------- | ----------------------------------------------------------------------------------------- |
-| `layer-lambda_memory`     | string | Yes      | The amount of memory the Lambda Function will be provisioned with                         |
+| `lambda_memory`     | string | Yes      | The amount of memory the Lambda Function will be provisioned with                         |
 | `lambda_runtime`          | string | Yes      | AWS Lambda Runtime the Lambda Fucntion will be created with                               |
 | `lambda_handler`          | string | Yes      | The Lambda function handler is the method in your function code that processes events     |
 | `lambda_architecture`     | string | No       | The instruction set architecture of a Lambda function. Default: `x86_64` - Allowed Values: `arm64`, `x86_64` |
@@ -30,7 +30,7 @@ In this repository there is an example environment file named `Pulumi.ENV.yaml` 
 | ------------------------- | ------ | -------- | ----------------------------------------------------------------------------------------- |
 | `create_api_mapping`      | boolean| No       | (Optional) Create a API Gateway API Domain Name Mapping                                   |
 | `route53_zone_name`       | string | No       | (Optional) An optional prefix that will be used for a folder path inside the S3 bucket    |
-| `api_url`                 | string | Yes      | An AWS Account ID to grant layer usage permissions to                                     |
+| `api_url`                 | string | Yes      | (Optional) An AWS Account ID to grant layer usage permissions to                                     |
 | `certificate_domain_name` | string | No       | (Optional) An optional prefix that will be used for a folder path inside the S3 bucket    |
 | ------------------------- | ------ | -------- | ----------------------------------------------------------------------------------------- |
 | `enable_xray_tracing`     | boolean| No       | (Optional) Enable AWS X-Ray Tracing  - Allowed Values: `True` or `False`                  |
