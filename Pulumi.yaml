@@ -1,6 +1,6 @@
-name: exo-fundamentals
+name: aws-pulumi-http-lambda
 runtime:
   name: python
   options:
     virtualenv: venv
-description: Fundamentals HTTP API to Lambda
+description: Quickstart template to create AWS HTTP API with a direct integration to Lambda

@@ -1,4 +1,8 @@
-"""An AWS Python Pulumi program"""
+    """[summary]
+
+    Returns:
+        [type]: [description]
+    """
 
 import pulumi
 import pulumi_aws as aws
@@ -35,13 +39,45 @@ aws.Provider('aws',
 
 tags={}
 
+def route53_zone_lookup(zone_name: str) -> str:
+# ----------------------------------------------------------------
+# ROUTE53
+# ----------------------------------------------------------------
+
+
+    try:
+        zone_lookup = aws.route53.get_zone(name=zone_name)
+        print(" * Route53 Zone Exists")
+        print(" * Route53 Zone Selected: " + zone_lookup.name)
+        print(" * Route53 Zone Id: " + zone_lookup.id)
+        ZONE_ID = zone_lookup.id
+
+        pulumi.export('Route53Id', zone_lookup.id)
+        pulumi.export('Route53NsAddresses', zone_lookup.name_servers)
+    except:
+        print("Route53 Zone does not exists and NEEDS to be created before running this.")
+        exit()
+
+    return zone_lookup.id
+
 
 # ----------------------------------------------------------------
 # API DOMAIN NAME MAPPING FUNCTION
 # ----------------------------------------------------------------
 def create_api_domain_mapping(acm_cert_arn: str, domain_name: str, api_id: str, stage_id, zone_id: str) -> str:
-    print("API Domain Name Mapping to be Created: " + domain_name)
+    # print("API Domain Name Mapping to be Created: " + domain_name)
+    """Creates a API Gateway Domain Name Mapping
 
+    Args:
+        acm_cert_arn (str): [description]
+        domain_name (str): [description]
+        api_id (str): [description]
+        stage_id ([type]): [description]
+        zone_id (str): [description]
+
+    Returns:
+        str: The API Gateway Domain Name Mapping URL
+    """
     apiDomainName = aws.apigatewayv2.DomainName("httpApiDomainName",
         domain_name=domain_name,
         domain_name_configuration=aws.apigatewayv2.DomainNameDomainNameConfigurationArgs(
@@ -55,7 +91,8 @@ def create_api_domain_mapping(acm_cert_arn: str, domain_name: str, api_id: str, 
     apiDomainMapping = aws.apigatewayv2.ApiMapping("httpApiDomainMapping",
         api_id=api_id,
         domain_name=domain_name,
-        stage=stage_id
+        stage=stage_id,
+        opts=pulumi.ResourceOptions(depends_on=[apiDomainName])
     )
 
     apiRoute53Record = aws.route53.Record("route53Record",
@@ -66,34 +103,13 @@ def create_api_domain_mapping(acm_cert_arn: str, domain_name: str, api_id: str, 
             name=apiDomainName.domain_name_configuration.target_domain_name,
             zone_id=apiDomainName.domain_name_configuration.hosted_zone_id,
             evaluate_target_health=False,
-        )]
+        )],
+        opts=pulumi.ResourceOptions(depends_on=[apiDomainMapping])
     )
 
     pulumi.export('apiGatewayDomainName', apiDomainName.domain_name_configuration.target_domain_name)
     return apiDomainName.domain_name_configuration.target_domain_name
 
-
-
-# ----------------------------------------------------------------
-# ROUTE53
-# ----------------------------------------------------------------
-
-checkZone = conf.get("route53_zone_name")
-if checkZone and checkZone.strip():
-    ROUTE53_ZONE = conf.get("route53_zone_name")
-
-    try:
-        zone_lookup = aws.route53.get_zone(name=ROUTE53_ZONE)
-        print("Route53 Zone Exists")
-        print("Route53 Zone Selected: " + zone_lookup.name)
-        print("Route53 Zone Id: " + zone_lookup.id)
-        ZONE_ID = zone_lookup.id
-
-        pulumi.export('Route53Id', zone_lookup.id)
-        pulumi.export('Route53NsAddresses', zone_lookup.name_servers)
-    except:
-        print("Route53 Zone does not exists and NEEDS to be created before running this.")
-        exit()
 
 
 # ----------------------------------------------------------------
@@ -160,8 +176,6 @@ if AUTHORIZER_TYPE == "JWT":
         )
     )
 
-    apiAuthorizerId = apiAuthorizer.id
-
 apiStage = aws.apigatewayv2.Stage("httpApiStage",
     api_id=api.id,
     auto_deploy=True,
@@ -177,6 +191,15 @@ apiStage = aws.apigatewayv2.Stage("httpApiStage",
 CREATE_API_MAPPING = conf.get("create_api_mapping")
 if CREATE_API_MAPPING and CREATE_API_MAPPING.lower() == "true":
     API_URL = conf.get("api_url")
+
+    print("API Domain Name Mapping to be Created: " + API_URL)
+    print(" * Checking Route53 Zone")
+    # lookup zone id
+    checkZone = conf.get("route53_zone_name")
+    if checkZone and checkZone.strip():
+        ROUTE53_ZONE = conf.get("route53_zone_name")
+
+        ZONE_ID = route53_zone_lookup(zone_name=ROUTE53_ZONE)
 
     # Uses ZONE_ID from above in the ROUTE53 section
     customDomainName = create_api_domain_mapping(acm_cert_arn=CERTIFICATE_ARN, domain_name=API_URL, api_id=api.id, stage_id=apiStage.id, zone_id=ZONE_ID)
@@ -276,15 +299,16 @@ lambda_function = aws.lambda_.Function("lambdaFunction",
     tags=tags
 )
 
+
 # https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-aws-services-reference.html
 # https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/integration/
 lambdaIntegration = aws.apigatewayv2.Integration("httpApiLambdaIntegration",
     api_id=api.id,
-    integration_type="AWS",
+    integration_type="AWS_PROXY",
     connection_type="INTERNET",
-    integration_uri=lambda_function.invoke_arn,
-    passthrough_behavior="WHEN_NO_MATCH",
-    integration_method="POST",
+    integration_uri=lambda_function.arn.apply(lambda arn: f"arn:aws:apigateway:{AWS_REGION}:lambda:path/2015-03-31/functions/{arn}/invocations"),
+    # passthrough_behavior="WHEN_NO_MATCH",
+    # integration_method="POST",
     payload_format_version="2.0",
     opts=pulumi.ResourceOptions(depends_on=[lambda_function])
 )
@@ -295,6 +319,20 @@ lambdaPermission = aws.lambda_.Permission("httpApiLambdaPermission",
     principal="apigateway.amazonaws.com",
     source_arn=api.execution_arn.apply(lambda execution_arn: f"{execution_arn}/*/*"),
 )
+
+# https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/route/
+PATH_MAPPING = conf.get("api_path")
+if PATH_MAPPING and PATH_MAPPING.strip():
+    PATH_MAPPING = conf.get("api_path")
+
+    print(f"API Path Mapping: {PATH_MAPPING}" )
+    apiRoute = aws.apigatewayv2.Route("httpApiRoute",
+        api_id=api.id,
+        route_key=PATH_MAPPING,
+        authorizer_id=apiAuthorizer.id.apply(lambda id: f"{id}"),
+        authorization_scopes=AUTHORIZER_SCOPES,
+        target=lambdaIntegration.id.apply(lambda id: f"integrations/{id}")
+    )
 
 
 # ----------------------------------------------------------------
