@@ -1,343 +1,114 @@
-    """[summary]
+"""An AWS Python Pulumi program"""
 
-    Returns:
-        [type]: [description]
-    """
+# pylint: disable=line-too-long,invalid-name
 
+import json
 import pulumi
-import pulumi_aws as aws
+# import pulumi_aws as aws
+from autotag import register_auto_tags
+import infra
 
 
-conf = pulumi.Config()
-AWS_ACCOUNT_ID = (aws.get_caller_identity()).account_id
-AWS_REGION = (aws.get_region()).name
-
-ENVIRONMENT = pulumi.get_stack()
-APP_NAME = pulumi.get_project()
-STACK_NAME = f"{ENVIRONMENT}-{APP_NAME}"
-
-LAMBDA_MEMORY = conf.get_int("lambda_memory")
-LAMBDA_RUNTIME = conf.get("lambda_runtime")
-LAMBDA_HANDLER = conf.get("lambda_handler")
-INSIGHTS_LAYER_X86 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension:16"
-INSIGHTS_LAYER_ARM64 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension-Arm64:1"
-POWERTOOLS_LAYER = f"arn:aws:lambda:{AWS_REGION}:017000801446:layer:AWSLambdaPowertoolsPython:6"
+# ----------------------------------------------------------------
+# Pull Stack Variables from Config File
+# ----------------------------------------------------------------
+CONFIG = pulumi.Config()
+STACK = CONFIG.require_object("stack")
+API = CONFIG.require_object("api")
+BUS = CONFIG.require_object("bus")
+LAMBDA = CONFIG.require_object("lambda")
 
 
-aws.Provider('aws',
-    default_tags=aws.provider.ProviderDefaultTagsArgs(
-        tags={
-            "iac": "pulumi",
-            "user:Project": APP_NAME,
-            "user:Stack": ENVIRONMENT,
-            "module": "aws-pulumi-http-lambda",
-            "module_source": "https://github.com/stephenbawks/aws-pulumi-http-lambda",
-            "module_version": "0.0.1",
-        }
-    )
+# ----------------------------------------------------------------
+# Automatically Inject Tags
+# ----------------------------------------------------------------
+
+register_auto_tags({
+    "iac": "pulumi",
+    'user:Project': pulumi.get_project(),
+    'user:Stack': pulumi.get_stack(),
+    'user:Cost Center': CONFIG.require('costCenter'),
+    "app-id": STACK.get("app_id"),
+    "development-team-email": STACK.get("development_team_email"),
+    "infrastructure-team-email": STACK.get("infrastructure_team_email"),
+    "infrastructure-engineer-email": STACK.get("infrastructure_engineer_email"),
+    "module": "pulumi-http-eventbridge-lambda",
+    "module_source": "https://github.com/stephenbawks/pulumi-http-eventbridge-lambda"
+})
+
+
+# ----------------------------------------------------------------
+# Create EventBridge Bus - Single Instance for Stack
+# ----------------------------------------------------------------
+
+bus_name = infra.create_event_bus(
+    name="pizza-bus",
+    archive_retention=BUS.get(
+        "archive_retention"),
+    enable_schema_discoverer=BUS.get(
+        "schema_discoverer")
 )
 
-tags={}
-
-def route53_zone_lookup(zone_name: str) -> str:
 # ----------------------------------------------------------------
-# ROUTE53
+# Create HTTP API - Single Instance for Stack
 # ----------------------------------------------------------------
 
-
-    try:
-        zone_lookup = aws.route53.get_zone(name=zone_name)
-        print(" * Route53 Zone Exists")
-        print(" * Route53 Zone Selected: " + zone_lookup.name)
-        print(" * Route53 Zone Id: " + zone_lookup.id)
-        ZONE_ID = zone_lookup.id
-
-        pulumi.export('Route53Id', zone_lookup.id)
-        pulumi.export('Route53NsAddresses', zone_lookup.name_servers)
-    except:
-        print("Route53 Zone does not exists and NEEDS to be created before running this.")
-        exit()
-
-    return zone_lookup.id
-
-
-# ----------------------------------------------------------------
-# API DOMAIN NAME MAPPING FUNCTION
-# ----------------------------------------------------------------
-def create_api_domain_mapping(acm_cert_arn: str, domain_name: str, api_id: str, stage_id, zone_id: str) -> str:
-    # print("API Domain Name Mapping to be Created: " + domain_name)
-    """Creates a API Gateway Domain Name Mapping
-
-    Args:
-        acm_cert_arn (str): [description]
-        domain_name (str): [description]
-        api_id (str): [description]
-        stage_id ([type]): [description]
-        zone_id (str): [description]
-
-    Returns:
-        str: The API Gateway Domain Name Mapping URL
-    """
-    apiDomainName = aws.apigatewayv2.DomainName("httpApiDomainName",
-        domain_name=domain_name,
-        domain_name_configuration=aws.apigatewayv2.DomainNameDomainNameConfigurationArgs(
-            certificate_arn=acm_cert_arn,
-            endpoint_type="REGIONAL",
-            security_policy="TLS_1_2",
-        ),
-        tags=tags
-    )
-
-    apiDomainMapping = aws.apigatewayv2.ApiMapping("httpApiDomainMapping",
-        api_id=api_id,
-        domain_name=domain_name,
-        stage=stage_id,
-        opts=pulumi.ResourceOptions(depends_on=[apiDomainName])
-    )
-
-    apiRoute53Record = aws.route53.Record("route53Record",
-        name=apiDomainName.domain_name,
-        type="A",
-        zone_id=zone_id,
-        aliases=[aws.route53.RecordAliasArgs(
-            name=apiDomainName.domain_name_configuration.target_domain_name,
-            zone_id=apiDomainName.domain_name_configuration.hosted_zone_id,
-            evaluate_target_health=False,
-        )],
-        opts=pulumi.ResourceOptions(depends_on=[apiDomainMapping])
-    )
-
-    pulumi.export('apiGatewayDomainName', apiDomainName.domain_name_configuration.target_domain_name)
-    return apiDomainName.domain_name_configuration.target_domain_name
-
-
-
-# ----------------------------------------------------------------
-# CERTIFICATE
-# ----------------------------------------------------------------
-
-checkCertificate = conf.get("certificate_domain_name")
-if checkCertificate and checkCertificate.strip():
-    checkCertificate = conf.get("certificate_domain_name")
-
-    print("Look up Certificate Domain Name: " + checkCertificate)
-    try:
-        certificate_lookup = aws.acm.get_certificate(domain=checkCertificate,
-            most_recent=True
-        )
-        print(" * Certificate Exists")
-        print(" * Certificate Id: " + certificate_lookup.id)
-        CERTIFICATE_ARN = certificate_lookup.arn
-
-        pulumi.export('CertificateArn', certificate_lookup.arn)
-    except:
-        print("Certificate does not exist and NEEDS to be created before running this.")
-        exit()
-
-
-
-# ----------------------------------------------------------------
-# HTTP API Gateway
-# ----------------------------------------------------------------
-
-logs = aws.cloudwatch.LogGroup("httpApiLogs",
-    name=f"/aws/http/{STACK_NAME}-api",
-    retention_in_days=7,
-    tags=tags
+infra.create_http_api(
+    name="pizza-api",
+    authorizer_type=API.get("authorizer_type"),
+    authorizer_uri=API.get("authorizer_uri"),
+    authorizer_audience=API.get("authorizer_audience"),
+    bus_name=bus_name,
+    api_url=API.get("url"),
+    api_path=API.get("api_path"),
+    route53_zone_name=API.get("route53_zone_name"),
+    certificate_name=API.get("certificate_name"),
 )
 
-api = aws.apigatewayv2.Api("httpApi",
-    name=f"{STACK_NAME}-api",
-    protocol_type="HTTP",
-    tags=tags
-)
-
-AUTHORIZER_TYPE = (conf.get("authorizer_type").upper())
-
-if AUTHORIZER_TYPE == "JWT":
-    AUTHORIZER_AUDIENCE = [conf.get("authorizer_audience")]
-    AUTHORIZER_URI = conf.get("authorizer_uri")
-    checkScopes = conf.get("authorizer_scopes")
-    if checkScopes and checkScopes.strip():
-        print("API Scopes to be Added: " + checkScopes)
-        AUTHORIZER_SCOPES = [conf.get("authorizer_scopes")]
-    else:
-        print("No API Scopes to be Added")
-        AUTHORIZER_SCOPES = []
-
-    # JWT Authorizer is True
-    apiAuthorizer = aws.apigatewayv2.Authorizer("httpApiAuthorizer",
-        api_id=api.id,
-        identity_sources=["$request.header.Authorization"],
-        authorizer_type="JWT",
-        jwt_configuration=aws.apigatewayv2.AuthorizerJwtConfigurationArgs(
-            issuer=AUTHORIZER_URI,
-            audiences=AUTHORIZER_AUDIENCE
-        )
-    )
-
-apiStage = aws.apigatewayv2.Stage("httpApiStage",
-    api_id=api.id,
-    auto_deploy=True,
-    name=ENVIRONMENT,
-    access_log_settings=aws.apigatewayv2.StageAccessLogSettingsArgs(
-        destination_arn=logs.arn,
-        format='{"requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","routeKey":"$context.routeKey", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength","integrationRequestId":"$context.integration.requestId","integrationStatus":"$context.integration.integrationStatus","integrationLatency":"$context.integrationLatency","integrationErrorMessage":"$context.integrationErrorMessage","errorMessageString":"$context.error.message","authorizerError":"$context.authorizer.error"}'
-    ),
-    tags=tags
-)
-
-
-CREATE_API_MAPPING = conf.get("create_api_mapping")
-if CREATE_API_MAPPING and CREATE_API_MAPPING.lower() == "true":
-    API_URL = conf.get("api_url")
-
-    print("API Domain Name Mapping to be Created: " + API_URL)
-    print(" * Checking Route53 Zone")
-    # lookup zone id
-    checkZone = conf.get("route53_zone_name")
-    if checkZone and checkZone.strip():
-        ROUTE53_ZONE = conf.get("route53_zone_name")
-
-        ZONE_ID = route53_zone_lookup(zone_name=ROUTE53_ZONE)
-
-    # Uses ZONE_ID from above in the ROUTE53 section
-    customDomainName = create_api_domain_mapping(acm_cert_arn=CERTIFICATE_ARN, domain_name=API_URL, api_id=api.id, stage_id=apiStage.id, zone_id=ZONE_ID)
-else:
-    print("No Domain Name Mapping")
-
-
 # ----------------------------------------------------------------
-# Lambda
+# SQS - Single or Mulitple Instances for Stack
 # ----------------------------------------------------------------
 
-# Any Managed Policies you want might to add here, comma separated
-LAMBDA_MANAGED_POLICY_ARNS=[]
-
-print("Lambda Options")
-
-LAMBDA_ARCHITECTURES = conf.get("lambda_architecture")
-if LAMBDA_ARCHITECTURES and LAMBDA_ARCHITECTURES.strip():
-    print(f" * Lambda Architectures: {LAMBDA_ARCHITECTURES}")
-else:
-    LAMBDA_ARCHITECTURES = "x86_64"
-    print(f" * Lambda Architectures: {LAMBDA_ARCHITECTURES}")
-
-LAMBDA_LAYER_ARNS = conf.get("lambda_layer_arns")
-if LAMBDA_LAYER_ARNS and LAMBDA_LAYER_ARNS.strip():
-    LAMBDA_LAYERS = []
-    LAMBDA_LAYER_ARNS = LAMBDA_LAYER_ARNS.replace(' ','').split(',')
-    LAMBDA_LAYERS.extend(LAMBDA_LAYER_ARNS)
-    print(f" + Additional Layers: {LAMBDA_LAYERS}")
-else:
-    LAMBDA_LAYERS = []
-
-
-ENABLE_XRAY_TRACING = conf.get("enable_xray_tracing")
-if ENABLE_XRAY_TRACING and ENABLE_XRAY_TRACING.lower() == "true":
-    print(f" * Enabling AWS XRay Tracing")
-    TRACING_CONFIGURATION = aws.lambda_.FunctionTracingConfigArgs(mode="Active")
-    LAMBDA_MANAGED_POLICY_ARNS.append("arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess")
-    print("   + Adding AWS XRay Managed Policy")
-else:
-    TRACING_CONFIGURATION = None
-
-ADD_INSIGHTS_LAYER = conf.get("add_insights_layer")
-if ADD_INSIGHTS_LAYER and ADD_INSIGHTS_LAYER.lower() == "true":
-    if LAMBDA_ARCHITECTURES == "arm64":
-        LAMBDA_LAYERS.append(INSIGHTS_LAYER_ARM64)
-        print(" + Adding Cloudwatch Lambda Insights Layer - arm64")
-    else:
-        LAMBDA_LAYERS.append(INSIGHTS_LAYER_X86)
-        print(" + Adding Cloudwatch Lambda Insights Layer - x86-64")
-    print("   + Adding Cloudwatch Lambda Insights Managed Policy")
-    LAMBDA_MANAGED_POLICY_ARNS.append("arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy")
-
-ADD_POWERTOOLS_LAYER = conf.get("add_powertools_layer")
-if ADD_POWERTOOLS_LAYER and ADD_POWERTOOLS_LAYER.lower() == "true":
-    LAMBDA_LAYERS.append(POWERTOOLS_LAYER)
-    print(" + Adding AWS Python Powertools Lambda Layer")
-
-if not ENABLE_XRAY_TRACING and not ADD_POWERTOOLS_LAYER and not ADD_INSIGHTS_LAYER:
-    print(" - No additional Lambda Layers or policies")
-elif bool(ENABLE_XRAY_TRACING) is False and bool(ADD_POWERTOOLS_LAYER) is False and bool(ADD_INSIGHTS_LAYER) is False:
-    print(" - No additional Lambda Layers or policies")
-
-lambdaAssumeRoleTrust = aws.iam.get_policy_document(statements=[aws.iam.GetPolicyDocumentStatementArgs(
-    actions=["sts:AssumeRole"],
-    principals=[aws.iam.GetPolicyDocumentStatementPrincipalArgs(
-        type="Service",
-        identifiers=["lambda.amazonaws.com"]
-    )],
-)])
-
-# https://www.pulumi.com/registry/packages/aws/api-docs/iam/role/
-lambda_role = aws.iam.Role("lambdaRole",
-    name_prefix=f"role-{STACK_NAME}",
-    assume_role_policy=lambdaAssumeRoleTrust.json,
-    managed_policy_arns=LAMBDA_MANAGED_POLICY_ARNS,
-    tags=tags,
-    opts=pulumi.ResourceOptions(delete_before_replace=True)
-)
-
-# Attach the fullaccess policy to the Lambda role created above
-role_policy_attachment = aws.iam.RolePolicyAttachment("lambdaRoleAttachment",
-    role=lambda_role,
-    policy_arn=aws.iam.ManagedPolicy.AWS_LAMBDA_BASIC_EXECUTION_ROLE)
-
-# https://www.pulumi.com/registry/packages/aws/api-docs/lambda/function/
-lambda_function = aws.lambda_.Function("lambdaFunction",
-    code=pulumi.AssetArchive({
-        ".": pulumi.FileArchive("./src"),
-    }),
-    runtime=LAMBDA_RUNTIME,
-    role=lambda_role.arn,
-    handler=LAMBDA_HANDLER,
-    layers=LAMBDA_LAYERS,
-    memory_size=LAMBDA_MEMORY,
-    tracing_config=TRACING_CONFIGURATION,
-    tags=tags
-)
-
-
-# https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-aws-services-reference.html
-# https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/integration/
-lambdaIntegration = aws.apigatewayv2.Integration("httpApiLambdaIntegration",
-    api_id=api.id,
-    integration_type="AWS_PROXY",
-    connection_type="INTERNET",
-    integration_uri=lambda_function.arn.apply(lambda arn: f"arn:aws:apigateway:{AWS_REGION}:lambda:path/2015-03-31/functions/{arn}/invocations"),
-    # passthrough_behavior="WHEN_NO_MATCH",
-    # integration_method="POST",
-    payload_format_version="2.0",
-    opts=pulumi.ResourceOptions(depends_on=[lambda_function])
-)
-
-lambdaPermission = aws.lambda_.Permission("httpApiLambdaPermission",
-    action="lambda:InvokeFunction",
-    function=lambda_function,
-    principal="apigateway.amazonaws.com",
-    source_arn=api.execution_arn.apply(lambda execution_arn: f"{execution_arn}/*/*"),
-)
-
-# https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/route/
-PATH_MAPPING = conf.get("api_path")
-if PATH_MAPPING and PATH_MAPPING.strip():
-    PATH_MAPPING = conf.get("api_path")
-
-    print(f"API Path Mapping: {PATH_MAPPING}" )
-    apiRoute = aws.apigatewayv2.Route("httpApiRoute",
-        api_id=api.id,
-        route_key=PATH_MAPPING,
-        authorizer_id=apiAuthorizer.id.apply(lambda id: f"{id}"),
-        authorization_scopes=AUTHORIZER_SCOPES,
-        target=lambdaIntegration.id.apply(lambda id: f"integrations/{id}")
-    )
-
+new_pizza_queue = infra.create_sqs_queue(name="NewPizza")
+cancel_pizza_queue = infra.create_sqs_queue(name="CancelPizza")
 
 # ----------------------------------------------------------------
-# OUTPUTS
+# EventBridge Rules/Targets - Single or Mulitple Instances for Stack
 # ----------------------------------------------------------------
-pulumi.export('LambdaFunctionArn', lambda_function.arn)
-pulumi.export('HttpApiId', api.id)
-pulumi.export('HttpApiUrl', api.api_endpoint)
+
+new_pizza_pattern = json.dumps({
+    "source": ["pizza.pineapple.events"],
+    "detail": {
+        "source": ["Pizza"],
+        "detail-type": ["NewOrder"]
+    }
+})
+new_pizza_rule = infra.create_rule_and_sqs_target(
+    name="NewPizza", bus_name=bus_name, rule_pattern=new_pizza_pattern, queue_target_arn=new_pizza_queue)
+
+cancel_pizza_pattern = json.dumps({
+    "source": ["pizza.pineapple.events"],
+    "detail": {
+        "source": ["Pizza"],
+        "detail-type": ["CancelOrder"]
+    }
+})
+cancel_pizza_rule = infra.create_rule_and_sqs_target(
+    name="CancelPizza", bus_name=bus_name, rule_pattern=cancel_pizza_pattern, queue_target_arn=cancel_pizza_queue)
+
+# ----------------------------------------------------------------
+# Lambda - Single or Mulitple Instances for Stack
+# ----------------------------------------------------------------
+
+infra.create_lambda_function(
+    function_name=LAMBDA.get("function_name"),
+    runtime=LAMBDA.get("runtime"),
+    code_source=LAMBDA.get("code_source"),
+    handler=LAMBDA.get("handler"),
+    memory=LAMBDA.get("memory"),
+    queue_arn=new_pizza_queue,
+    layer_arns=LAMBDA.get("layer_arns"),
+    x_ray=LAMBDA.get("x_ray"),
+    insights=LAMBDA.get("insights"),
+    powertools=LAMBDA.get("powertools"),
+)

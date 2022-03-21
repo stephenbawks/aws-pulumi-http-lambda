@@ -1,6 +1,6 @@
-name: aws-pulumi-http-lambda
+name: pineapple-pizza
 runtime:
   name: python
   options:
     virtualenv: venv
-description: Quickstart template to create AWS HTTP API with a direct integration to Lambda
+description: Creates a HTTP API Gateway with an integration to Eventbridge that will trigger rule(s).  The rule will target a SQS queue that in turn triggers a Lambda function.

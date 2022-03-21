@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "pulumi-http-eventbridge-lambda"
+version = "0.1.0"
+description = ""
+authors = ["Stephen Bawks <stephen@bawks.dev>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pulumi = "^3.26.1"
+pulumi-aws = "^4.38.1"
+loguru = "^0.6.0"
+
+[tool.poetry.dev-dependencies]
+taggable = "^0.2.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
