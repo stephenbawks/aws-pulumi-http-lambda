@@ -1,6 +1,6 @@
 config:
-  aws:profile: sb
-  aws:region: us-east-2
+  # aws:profile: sb
+  # aws:region: us-east-2
   pineapple-pizza:api:
     api_path: POST /event
     authorizer_audience: urn:ql-api:rhds_team_member_events_listener_api-210293:Beta

@@ -4,13 +4,15 @@
   - [Purpose](#purpose)
   - [How To Use](#how-to-use)
     - [Inputs](#inputs)
+  - [Infrastructure Diagram](#infrastructure-diagram)
   - [Getting Started](#getting-started)
     - [Prerequisite](#prerequisite)
       - [Poetry](#poetry)
         - [Installing without poetry.lock](#installing-without-poetrylock)
         - [Installing with poetry.lock](#installing-with-poetrylock)
         - [Commit your poetry.lock file to version control](#commit-your-poetrylock-file-to-version-control)
-  - [Optional Inputs](#optional-inputs)
+    - [Deploying](#deploying)
+    - [Up](#up)
 
 ## Purpose
 
@@ -48,6 +50,10 @@ In this repository there is an example environment file named `Pulumi.ENV.yaml` 
 | `lambda_layer_arns`       | string | No       | (Optional) Comma seperate string of layers you want to attach                             |
 
 
+
+## Infrastructure Diagram
+
+Here is a diagram of what this template will be building.
 
 ## Getting Started
 
@@ -88,4 +94,14 @@ Either way, running `install` when a `poetry.lock` file is present resolves and 
 Committing this file to VC is important because it will cause anyone who sets up the project to use the exact same versions of the dependencies that you are using. Your CI server, production machines, other developers in your team, everything and everyone runs on the same dependencies, which mitigates the potential for bugs affecting only some parts of the deployments. Even if you develop alone, in six months when reinstalling the project you can feel confident the dependencies installed are still working even if your dependencies released many new versions since then.
 
 
-## Optional Inputs
+### Deploying
+
+Pulumi has the ability to create indenpendent environments or called a stack.  It represents that as a key-value pairs stored in a stack settings file named `Pulumi.<stackname>.yaml`.  For example, lets say you have two different environments that you have named `nonprod` and `prod`.  You would represent those by having two aptly named files in your respository named `Pulumi.nonprod.yaml` and `Pulumi.prod.yaml`.  This allows you to have different configurations for each environment.  If your `prod` environment needs more memory than your `nonprod` environment you can change your `Pulumi.prod.yaml` to represent that so that this will not affect infrastructure in your `nonprod` environment.
+
+Included in this respository there is a single file that is named `Pulumi.nonprod.yaml` that can be used for getting started quickly.
+
+### Up
+
+The command to create and or update resources in a stack is [`pulumi up`](https://www.pulumi.com/docs/reference/cli/pulumi_up/). The new desired goal state for the target stack is computed by running the current Pulumi program and observing all resource allocations to produce a resource graph. This goal state is then compared against the existing state to determine what create, read, update, and/or delete operations must take place to achieve the desired goal state, in the most minimally disruptive way. This command records a full transactional snapshot of the stack’s new state afterwards so that the stack may be updated incrementally again later on.
+
+
