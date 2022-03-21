@@ -3,16 +3,16 @@ config:
   # aws:region: us-east-2
   pineapple-pizza:api:
     api_path: POST /event
-    authorizer_audience: urn:ql-api:rhds_team_member_events_listener_api-210293:Beta
+    authorizer_audience: urn:example:audience
     authorizer_type: JWT
-    authorizer_uri: https://sso.beta.authrock.com/
+    authorizer_uri: https://my-redirect-uri.callback
     create_mapping: true
-    certificate_name: serverless.bawks.dev
-    route53_zone_name: serverless.bawks.dev
-    url: serverless.bawks.dev
+    certificate_name: example.pineapple.pizza
+    route53_zone_name: example.pineapple.pizza
+    url: example.pineapple.pizza
   pineapple-pizza:bus:
     archive_retention: 7
-    bus_name: awesome-pulumi-job
+    bus_name: awesome-pizza-bus
     schema_discoverer: true
   pineapple-pizza:lambda:
     code_source: ./src
