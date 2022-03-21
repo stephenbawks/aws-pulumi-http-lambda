@@ -18,7 +18,7 @@
 
 This package creates an AWS HTTP API (APIGatewayV2) with an integration to EventBridge. This will also create an EventBridge Rule that targets a SQS Queue that will then trigger the Lambda.
 
-<a href="https://app.pulumi.com/new?template=https://github.com/stephenbawks/pulumi-http-eventbridge-lambda" rel="nofollow"><img src="https://camo.githubusercontent.com/4ce4c9f9d2258c141f1151c02886342d68858e7b62b291c7a913f082f7c4c0a7/68747470733a2f2f6765742e70756c756d692e636f6d2f6e65772f627574746f6e2e737667" alt="Deploy with Pulumi" data-canonical-src="https://get.pulumi.com/new/button.svg" style="max-width: 100%;">
+<a href="https://app.pulumi.com/new?template=https://github.com/stephenbawks/pulumi-http-eventbridge-lambda" rel="nofollow"><img src="https://camo.githubusercontent.com/4ce4c9f9d2258c141f1151c02886342d68858e7b62b291c7a913f082f7c4c0a7/68747470733a2f2f6765742e70756c756d692e636f6d2f6e65772f627574746f6e2e737667" alt="Deploy with Pulumi" data-canonical-src="https://get.pulumi.com/new/button.svg" style="max-width: 100%;"></a>
 
 
 ## How To Use
