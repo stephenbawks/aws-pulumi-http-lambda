@@ -1,15 +1,15 @@
 config:
   # aws:profile: sb
-  # aws:region: us-east-2
+  aws:region: us-east-2
   pineapple-pizza:api:
     api_path: POST /event
     authorizer_audience: urn:example:audience
     authorizer_type: JWT
-    authorizer_uri: https://my-redirect-uri.callback
+    authorizer_uri: https://dev-qzwsg8zx.auth0.com/
     create_mapping: true
-    certificate_name: example.pineapple.pizza
-    route53_zone_name: example.pineapple.pizza
-    url: example.pineapple.pizza
+    certificate_name: api.skwab.dev
+    route53_zone_name: api.skwab.dev
+    url: api.skwab.dev
   pineapple-pizza:bus:
     archive_retention: 7
     bus_name: awesome-pizza-bus

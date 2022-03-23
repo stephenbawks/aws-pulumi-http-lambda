@@ -27,7 +27,6 @@ register_auto_tags({
     "iac": "pulumi",
     'user:Project': pulumi.get_project(),
     'user:Stack': pulumi.get_stack(),
-    'user:Cost Center': CONFIG.require('costCenter'),
     "app-id": STACK.get("app_id"),
     "development-team-email": STACK.get("development_team_email"),
     "infrastructure-team-email": STACK.get("infrastructure_team_email"),
