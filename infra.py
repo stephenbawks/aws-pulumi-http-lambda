@@ -19,9 +19,9 @@ ENVIRONMENT = pulumi.get_stack()
 APP_NAME = pulumi.get_project()
 STACK_NAME = f"{ENVIRONMENT}-{APP_NAME}"
 
-INSIGHTS_LAYER_X86 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension:16"
-INSIGHTS_LAYER_ARM64 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension-Arm64:1"
-POWERTOOLS_LAYER = f"arn:aws:lambda:{AWS_REGION}:017000801446:layer:AWSLambdaPowertoolsPython:13"
+INSIGHTS_LAYER_X86 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension:18"
+INSIGHTS_LAYER_ARM64 = f"arn:aws:lambda:{AWS_REGION}:580247275435:layer:LambdaInsightsExtension-Arm64:2"
+POWERTOOLS_LAYER = f"arn:aws:lambda:{AWS_REGION}:017000801446:layer:AWSLambdaPowertoolsPython:15"
 
 
 # ----------------------------------------------------------------

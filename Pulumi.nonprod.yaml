@@ -1,30 +1,8 @@
 config:
-  # aws:profile: sb
   aws:region: us-east-2
-  pineapple-pizza:api:
-    api_path: POST /event
-    authorizer_audience: urn:example:audience
-    authorizer_type: JWT
-    authorizer_uri: https://dev-qzwsg8zx.auth0.com/
-    create_mapping: true
-    certificate_name: api.skwab.dev
-    route53_zone_name: api.skwab.dev
-    url: api.skwab.dev
-  pineapple-pizza:bus:
-    archive_retention: 7
-    bus_name: awesome-pizza-bus
-    schema_discoverer: true
-  pineapple-pizza:lambda:
-    code_source: ./src
-    function_name: doStuff
-    handler: lambda_function.lambda_handler
-    memory: 256
-    runtime: python3.9
-    insights: true
-    powertools: true
-    x_ray: true
-  pineapple-pizza:stack:
-    app_id: 123456
-    development_team_email: email@example.com
-    infrastructure_engineer_email: email@example.com
-    infrastructure_team_email: email@example.com
+  pineapple-pizza:api_authorizer_audience: urn:example:audience
+  pineapple-pizza:api_authorizer_uri: https://aksdfkajdshf.auth0.com/
+  pineapple-pizza:api_url: api.skwab.dev
+  pineapple-pizza:certificate_name: api.skwab.dev
+  pineapple-pizza:route53_zone_name: api.skwab.dev
+  pineapple-pizza:lambda_memory: "256"
