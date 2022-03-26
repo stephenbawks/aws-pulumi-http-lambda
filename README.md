@@ -57,6 +57,8 @@ In this repository there is an example environment file named `Pulumi.ENV.yaml` 
 
 Here is a diagram of what this template will be building.
 
+![](./documentation/images/architecture.png)
+
 ## Getting Started
 
 ### Prerequisite
