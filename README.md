@@ -9,6 +9,7 @@
     - [Prerequisite](#prerequisite)
     - [Environments or Stacks](#environments-or-stacks)
     - [Up](#up)
+    - [Adding a Stack](#adding-a-stack)
 
 ## Purpose
 
@@ -87,3 +88,12 @@ If you are trying this out locally you will probably want to add a `profile` var
 ![](./documentation/images/config.png)
 
 The command to create and or update resources in a stack is [`pulumi up`](https://www.pulumi.com/docs/reference/cli/pulumi_up/). The new desired goal state for the target stack is computed by running the current Pulumi program and observing all resource allocations to produce a resource graph. This goal state is then compared against the existing state to determine what create, read, update, and/or delete operations must take place to achieve the desired goal state, in the most minimally disruptive way. This command records a full transactional snapshot of the stack’s new state afterwards so that the stack may be updated incrementally again later on.
+
+
+### Adding a Stack
+
+In this repo there is the example `nonprod` stack but lets say you wanted to add another environment/stack as well.  For example, lets create one and name it `prod`.  After you create the new stack we also want to `select` the active stack.
+
+If we do not, it will attempt to keep using our default one which at the moment is `nonprod`.  After we select the new `prod` stack lets go ahead and add the AWS region we want to use.
+
+![](./documentation/images/new-stack.png)
