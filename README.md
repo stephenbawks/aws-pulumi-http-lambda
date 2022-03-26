@@ -86,4 +86,4 @@ The command to create and or update resources in a stack is [`pulumi up`](https:
 
 If you are trying this out locally you will probably want to add a `profile` variable to your configuration file.  You can do this as well as set your region at the command line with the following commands.
 
-![](./documentation/images/config-profile.png)
+![](./documentation/images/config.png)
