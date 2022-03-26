@@ -89,6 +89,12 @@ If you are trying this out locally you will probably want to add a `profile` var
 
 The command to create and or update resources in a stack is [`pulumi up`](https://www.pulumi.com/docs/reference/cli/pulumi_up/). The new desired goal state for the target stack is computed by running the current Pulumi program and observing all resource allocations to produce a resource graph. This goal state is then compared against the existing state to determine what create, read, update, and/or delete operations must take place to achieve the desired goal state, in the most minimally disruptive way. This command records a full transactional snapshot of the stack’s new state afterwards so that the stack may be updated incrementally again later on.
 
+Near the top of the page here that is a button you can click to get a project set up in your own Pulumi organization.  It will give you the ability to create the new project and name it whatever you want as well as a default stack/environment you want to get started with.
+
+__**Important Note**__
+
+If you decide to name it something else (assuming you will as no one actually likes pineapple pizza) just make sure you rename the references to `pineapple-pizza` in your `Pulumi.nonprod.yaml` file to whatever you name your project.  If you are not using `nonprod` as your environment/stack make sure you rename the `Pulumi.nonprod.yaml` to `Pulumi.<stack-name>.yaml`.
+
 
 ### Adding a Stack
 
