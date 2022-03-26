@@ -1,9 +1,9 @@
 import os
-# from loguru import logger as logs
-# from aws_lambda_powertools.metrics import MetricUnit
-# from aws_lambda_powertools import Tracer, Logger, Metrics
-# from aws_lambda_powertools.utilities.data_classes import event_source, SQSEvent
-# from aws_lambda_powertools.utilities import parameters
+from loguru import logger as logs
+from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools import Tracer, Logger, Metrics
+from aws_lambda_powertools.utilities.data_classes import event_source, SQSEvent
+from aws_lambda_powertools.utilities import parameters
 
 
 # Grabbing Environmental Variables on the Lambda Function
