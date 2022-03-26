@@ -1,5 +1,5 @@
 import os
-from loguru import logger as logs
+# from loguru import logger as logs
 # from aws_lambda_powertools.metrics import MetricUnit
 # from aws_lambda_powertools import Tracer, Logger, Metrics
 # from aws_lambda_powertools.utilities.data_classes import event_source, SQSEvent
