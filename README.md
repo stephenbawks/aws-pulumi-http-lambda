@@ -8,8 +8,10 @@
   - [Getting Started](#getting-started)
     - [Prerequisite](#prerequisite)
     - [Environments or Stacks](#environments-or-stacks)
-    - [Adding a Stack](#adding-a-stack)
+      - [Adding a Stack](#adding-a-stack)
     - [Up](#up)
+      - [Module Basics](#module-basics)
+      - [Functions](#functions)
 
 ## Purpose
 
@@ -79,7 +81,7 @@ Pulumi has the ability to create indenpendent environments or called a stack.  I
 
 Included in this respository there is a single file that is named `Pulumi.nonprod.yaml` that can be used for getting started quickly.
 
-### Adding a Stack
+#### Adding a Stack
 
 In this repo there is the example `nonprod` stack but lets say you wanted to add another environment/stack as well.  For example, lets create one and name it `prod`.  After you create the new stack we also want to `select` the active stack.
 
@@ -103,3 +105,11 @@ Near the top of the page here that is a button you can click to get a project se
 __**Important Note**__
 
 If you decide to name it something else (assuming you will as no one actually likes pineapple pizza) just make sure you rename the references to `pineapple-pizza` in your `Pulumi.nonprod.yaml` file to whatever you name your project.  If you are not using `nonprod` as your environment/stack make sure you rename the `Pulumi.nonprod.yaml` to `Pulumi.<stack-name>.yaml`.
+
+#### Module Basics
+
+The way this module is constructed is that there is a `__main__.py` file that is an abstracted constructor that is calling functions that are defined inside the `infra.py` file.  Inside that file there is all the common resource types that is Pulumi is using to create your infrastructure.  Packaged inside that file is also functions that adding rich logic on when and how to create that infrastructure.  The nice thing about this is that we can abstract vast amounts of knowledge and package them up in some pretty simple functions that you are calling from the `__main__.py` file.  There are certain functions that you can actually call repeatedly allowing you to build several pieces of infrastructure by calling the functions multiple time.
+
+Below there is a list of functions on details on them.
+
+#### Functions
