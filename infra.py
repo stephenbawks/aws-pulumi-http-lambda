@@ -39,11 +39,13 @@ def create_event_bus(name: str, archive_retention: Optional[int] = 7, enable_sch
         str: EventBridge Event Bus ARN
     """
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/cloudwatch/eventbus/
     event_bus = aws.cloudwatch.EventBus(
         f"{name}EventBus",
         name=f"{STACK_NAME}-bus",
     )
 
+    # https: // www.pulumi.com/registry/packages/aws/api-docs/cloudwatch/eventarchive/
     event_archive = aws.cloudwatch.EventArchive(
         f"{name}EventArchive",
         name=f"archive-{STACK_NAME}",
@@ -53,6 +55,7 @@ def create_event_bus(name: str, archive_retention: Optional[int] = 7, enable_sch
             parent=event_bus)
     )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/schemas/discoverer/
     if enable_schema_discoverer:
         schema_discoverer = aws.schemas.Discoverer(
             "eventBusSchemaDiscoverer",
@@ -141,6 +144,7 @@ def create_api_domain_mapping(cert_name: str, domain_name: str, api_id: str, sta
 
     print("API Domain Name Mapping to be Created: " + domain_name)
 
+    # https: // www.pulumi.com/registry/packages/aws/api-docs/apigateway/domainname/
     api_domain_name = aws.apigatewayv2.DomainName(
         "api-domain-name",
         domain_name=domain_name,
@@ -151,6 +155,7 @@ def create_api_domain_mapping(cert_name: str, domain_name: str, api_id: str, sta
         )
     )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/apimapping/
     api_domain_mapping = aws.apigatewayv2.ApiMapping(
         "httpApiDomainMapping",
         api_id=api_id,
@@ -160,6 +165,7 @@ def create_api_domain_mapping(cert_name: str, domain_name: str, api_id: str, sta
             depends_on=[api_domain_name], parent=api_domain_name)
     )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/route53/record/
     aws.route53.Record(
         "route53-record",
         name=api_domain_name.domain_name,
@@ -218,12 +224,14 @@ def create_http_api(
 
     """
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/api/
     api = aws.apigatewayv2.Api(
         f"{name}HttpApi",
         name=f"{STACK_NAME}-api",
         protocol_type="HTTP"
     )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/cloudwatch/loggroup/
     logs = aws.cloudwatch.LogGroup(
         f"{name}HttpApiLogs",
         name=f"/aws/http/{STACK_NAME}-api",
@@ -240,6 +248,7 @@ def create_http_api(
             AUTHORIZER_SCOPES = []
 
         # JWT Authorizer
+        # https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/authorizer/
         api_authorizer = aws.apigatewayv2.Authorizer(
             f"{name}HttpApiAuthorizer",
             api_id=api.id,
@@ -255,6 +264,7 @@ def create_http_api(
                 depends_on=[api], parent=api)
         )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/stage/
     api_stage = aws.apigatewayv2.Stage(
         f"{name}HttpApiStage",
         api_id=api.id,
@@ -335,11 +345,11 @@ def create_lambda_function(
         handler: str,
         memory: int,
         queue_arn: str,
-        layer_arns: str = None,
-        x_ray: bool = False,
-        insights: bool = False,
-        powertools: bool = False,
-        architecture: str = "x86_64") -> str:
+        layer_arns: Optional[str] = None,
+        x_ray: Optional[bool] = False,
+        insights: Optional[bool] = False,
+        powertools: Optional[bool] = False,
+        architecture: Optional[str] = "x86_64") -> str:
     """
         Creates a Lambda Function
 
@@ -460,6 +470,7 @@ def create_lambda_function(
             depends_on=[lambda_role])
     )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/lambda/eventsourcemapping/
     aws.lambda_.EventSourceMapping(
         f"{function_name}LambdaSourceMapping",
         event_source_arn=queue_arn,
@@ -508,6 +519,7 @@ def create_sqs_queue(name: str) -> str:
         )]
     )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/sqs/queuepolicy/
     aws.sqs.QueuePolicy(
         f"{name}QueuePolicy",
         queue_url=sqs_queue.id,
@@ -538,6 +550,8 @@ def create_rule_and_sqs_target(name: str, bus_name: str, rule_pattern: str, queu
     Returns:
         str: Events Rule ARN
     """
+
+    # https://www.pulumi.com/registry/packages/aws/api-docs/cloudwatch/eventrule/
     event_rule = aws.cloudwatch.EventRule(
         f"{name}Rule",
         name=f"{STACK_NAME}-{name}-rule",
@@ -546,6 +560,7 @@ def create_rule_and_sqs_target(name: str, bus_name: str, rule_pattern: str, queu
         event_pattern=rule_pattern,
     )
 
+    # https://www.pulumi.com/registry/packages/aws/api-docs/cloudwatch/eventtarget/
     aws.cloudwatch.EventTarget(
         f"{name}RuleTarget",
         arn=queue_target_arn,
