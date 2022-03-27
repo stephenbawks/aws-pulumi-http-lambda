@@ -30,7 +30,7 @@ POWERTOOLS_LAYER = f"arn:aws:lambda:{AWS_REGION}:017000801446:layer:AWSLambdaPow
 
 def create_event_bus(name: str, archive_retention: Optional[int] = 7, enable_schema_discoverer: Optional[bool] = False) -> str:
     """
-        Creates an EventBridge Event Bus
+    Creates an EventBridge Event Bus
 
     Args:
         resource_name (str): A name that will be used to create the EventBridge Event Bus
@@ -204,7 +204,7 @@ def create_http_api(
         authorizer_scopes: str = None,
         log_retention_days: int = 7) -> str:
     """
-        Creates an API Gateway HTTP API
+    Creates an API Gateway HTTP API
 
     Args:
         name (str): The name of the API Gateway HTTP API
@@ -351,7 +351,7 @@ def create_lambda_function(
         powertools: Optional[bool] = False,
         architecture: Optional[str] = "x86_64") -> str:
     """
-        Creates a Lambda Function
+    Creates a Lambda Function
 
     Args:
         name (str): A name that will be used to create the Lambda Function
@@ -488,7 +488,7 @@ def create_lambda_function(
 # ----------------------------------------------------------------
 def create_sqs_queue(name: str) -> str:
     """
-        Creates a SQS Queue
+    Creates a SQS Queue
 
     Args:
         name (str): A name that will be used to create the SQS Queue
@@ -538,7 +538,7 @@ def create_sqs_queue(name: str) -> str:
 
 def create_rule_and_sqs_target(name: str, bus_name: str, rule_pattern: str, queue_target_arn: str, enabled: Optional[bool] = True,) -> str:
     """
-        Creates a Event Rule and Event Target for a SQS Queue
+    Creates a Event Rule and Event Target for a SQS Queue
 
     Args:
         name (str): A name that will be used to create the Event Rule and Event Target

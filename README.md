@@ -108,8 +108,19 @@ If you decide to name it something else (assuming you will as no one actually li
 
 #### Module Basics
 
-The way this module is constructed is that there is a `__main__.py` file that is an abstracted constructor that is calling functions that are defined inside the `infra.py` file.  Inside that file there is all the common resource types that is Pulumi is using to create your infrastructure.  Packaged inside that file is also functions that adding rich logic on when and how to create that infrastructure.  The nice thing about this is that we can abstract vast amounts of knowledge and package them up in some pretty simple functions that you are calling from the `__main__.py` file.  There are certain functions that you can actually call repeatedly allowing you to build several pieces of infrastructure by calling the functions multiple time.
+The way this module is constructed is that there is a `__main__.py` file that is an abstracted constructor that is calling functions that are defined inside the `infra.py` file.  Inside that file there is all the common resource types that is Pulumi is using to create your infrastructure.  Packaged inside that file is also functions that adding rich logic on when and how to create that infrastructure.  Allowing you to optional pass or not pass certain arguments.
+
+The nice thing about this is that we can abstract vast amounts of code, while packaging up best practices/standards and package them up in some pretty simple functions that you are calling from the `__main__.py` file.  There are certain functions that you can actually call repeatedly allowing you to build several pieces of infrastructure by calling the functions multiple time.
 
 Below there is a list of functions on details on them.
 
 #### Functions
+
+
+| Function Name             | Instance | Description                                                           |
+| ------------------------- | ------   | --------------------------------------------------------------------- |
+| `create_event_bus`        | Single   | Creates an EventBridge Event Bus
+| `create_http_api`         | Single   | Creates an API Gateway HTTP API
+| `create_sqs_queue`        | Mulitple | Creates a SQS Queue
+| `create_rule_and_sqs_target` | Multiple | Creates a Event Rule and Event Target for a SQS Queue
+| `create_lambda_function`  | Multple  | Creates a Lambda Function
