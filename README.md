@@ -8,8 +8,8 @@
   - [Getting Started](#getting-started)
     - [Prerequisite](#prerequisite)
     - [Environments or Stacks](#environments-or-stacks)
-    - [Up](#up)
     - [Adding a Stack](#adding-a-stack)
+    - [Up](#up)
 
 ## Purpose
 
@@ -79,6 +79,15 @@ Pulumi has the ability to create indenpendent environments or called a stack.  I
 
 Included in this respository there is a single file that is named `Pulumi.nonprod.yaml` that can be used for getting started quickly.
 
+### Adding a Stack
+
+In this repo there is the example `nonprod` stack but lets say you wanted to add another environment/stack as well.  For example, lets create one and name it `prod`.  After you create the new stack we also want to `select` the active stack.
+
+If we do not, it will attempt to keep using our default one which at the moment is `nonprod`.  After we select the new `prod` stack lets go ahead and add the AWS region we want to use.
+
+![](./documentation/images/new-stack.png)
+
+
 ### Up
 
 Enough with the documentaiton, lets get started!
@@ -94,12 +103,3 @@ Near the top of the page here that is a button you can click to get a project se
 __**Important Note**__
 
 If you decide to name it something else (assuming you will as no one actually likes pineapple pizza) just make sure you rename the references to `pineapple-pizza` in your `Pulumi.nonprod.yaml` file to whatever you name your project.  If you are not using `nonprod` as your environment/stack make sure you rename the `Pulumi.nonprod.yaml` to `Pulumi.<stack-name>.yaml`.
-
-
-### Adding a Stack
-
-In this repo there is the example `nonprod` stack but lets say you wanted to add another environment/stack as well.  For example, lets create one and name it `prod`.  After you create the new stack we also want to `select` the active stack.
-
-If we do not, it will attempt to keep using our default one which at the moment is `nonprod`.  After we select the new `prod` stack lets go ahead and add the AWS region we want to use.
-
-![](./documentation/images/new-stack.png)
