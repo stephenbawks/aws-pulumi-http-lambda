@@ -97,7 +97,7 @@ Enough with the documentaiton, lets get started!
 If you are trying this out locally you will probably want to add a `profile` variable to specify which [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) you may want to use.  You can do this as well as set your region at the command line with the following commands.
 
 
-![](./documentation/images/config.png)
+![](./documentation/images/set-config.png)
 
 The command to create and or update resources in a stack is [`pulumi up`](https://www.pulumi.com/docs/reference/cli/pulumi_up/). The new desired goal state for the target stack is computed by running the current Pulumi program and observing all resource allocations to produce a resource graph. This goal state is then compared against the existing state to determine what create, read, update, and/or delete operations must take place to achieve the desired goal state, in the most minimally disruptive way. This command records a full transactional snapshot of the stack’s new state afterwards so that the stack may be updated incrementally again later on.
 
