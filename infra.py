@@ -45,7 +45,7 @@ def create_event_bus(name: str, archive_retention: Optional[int] = 7, enable_sch
         name=f"{STACK_NAME}-bus",
     )
 
-    # https: // www.pulumi.com/registry/packages/aws/api-docs/cloudwatch/eventarchive/
+    # https://www.pulumi.com/registry/packages/aws/api-docs/cloudwatch/eventarchive/
     event_archive = aws.cloudwatch.EventArchive(
         f"{name}EventArchive",
         name=f"archive-{STACK_NAME}",
